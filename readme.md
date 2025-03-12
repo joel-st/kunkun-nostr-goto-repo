@@ -1,4 +1,4 @@
-# Nostr NIP Repository Extension
+# Open Nostr NIP Repository Extension
 
 This extension opens the official [Nostr NIP](https://github.com/nostr-protocol/nips) (Nostr Implementation Possibilities) repository in your browser. It's a simple headless command that can be triggered from [Kunkun](https://kunkun.sh).
 
