@@ -26,7 +26,7 @@
     },
     "headlessCmds": [
       {
-        "name": "Open NIP Repo",
+        "name": "Nostr Open NIP Repository",
         "main": "dist/index.js",
         "cmds": []
       }
