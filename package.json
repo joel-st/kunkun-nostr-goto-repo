@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schema.kunkun.sh",
+  "name": "nostr-goto-repo",
+  "version": "0.0.10",
+  "license": "CC0-1.0",
+  "type": "module",
+  "kunkun": {
+    "name": "Nostr open NIP Repository",
+    "shortDescription": "Opens the NIP repository in your browser",
+    "longDescription": "Opens the NIP repository in your browser",
+    "identifier": "nostr-goto-repo",
+    "permissions": [
+      {
+        "permission": "open:url",
+        "allow": [
+          {
+            "url": "https://github.com/nostr-protocol/nips"
+          }
+        ]
+      }
+    ],
+    "demoImages": [],
+    "icon": {
+      "type": "iconify",
+      "value": "majesticons:open"
+    },
+    "headlessCmds": [
+      {
+        "name": "Open NIP Repo",
+        "main": "dist/index.js",
+        "cmds": []
+      }
+    ]
+  },
+  "scripts": {
+    "dev": "bun build.ts dev --headless",
+    "build": "bun build.ts"
+  },
+  "dependencies": {
+    "@kksh/api": "0.1.5",
+    "i18next": "^23.15.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "./dist",
+    ".gitignore"
+  ]
+}
