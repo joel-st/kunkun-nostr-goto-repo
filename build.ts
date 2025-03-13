@@ -3,7 +3,7 @@ import { join } from "path"
 import { refreshTemplateWorkerCommand } from "@kksh/api/dev"
 import { $ } from "bun"
 
-const entrypoints = ["./src/index.ts"]
+const entrypoints = ["./src/index-github.ts", "./src/index-nostrcom.ts"]
 
 async function build() {
 	try {

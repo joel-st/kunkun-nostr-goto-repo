@@ -15,6 +15,9 @@
         "allow": [
           {
             "url": "https://github.com/nostr-protocol/nips"
+          },
+          {
+            "url": "https://nips.nostr.com/"
           }
         ]
       }
@@ -24,24 +27,52 @@
       "type": "iconify",
       "value": "majesticons:open"
     },
+    "customUiCmds": [
+			{
+        "main": "/index-nip.js",
+        "dist": "dist",
+        "devMain": "http://localhost:5173",
+        "name": "Nostr Open Specific NIP",
+        "cmds": []
+      }
+		],
     "headlessCmds": [
       {
-        "name": "Nostr Open NIP Repository",
-        "main": "dist/index.js",
+        "name": "Nostr Open NIP Repository (github.com)",
+        "main": "dist/index-github.js",
+        "cmds": []
+      },
+      {
+        "name": "Nostr Open NIP Repository (nostr.com)",
+        "main": "dist/index-nostrcom.js",
         "cmds": []
       }
     ]
   },
   "scripts": {
-    "dev": "bun build.ts dev --headless",
-    "build": "bun build.ts"
+    "dev:headless": "bun build.ts dev --headless",
+    "build:headless": "bun build.ts",
+    "dev:nip": "vite",
+    "build:nip": "vite build"
   },
   "dependencies": {
     "@kksh/api": "0.1.5",
+    "@kksh/react": "0.1.1",
+    "@radix-ui/react-icons": "^1.3.0",
+    "preact": "^10.19.6",
     "i18next": "^23.15.1"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@preact/preset-vite": "^2.8.1",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.7",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.6",
+    "vite": "^5.4.9"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
