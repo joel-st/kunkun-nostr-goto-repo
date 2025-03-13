@@ -14,10 +14,10 @@
         "permission": "open:url",
         "allow": [
           {
-            "url": "https://github.com/nostr-protocol/nips"
+            "url": "https://github.com/**"
           },
           {
-            "url": "https://nips.nostr.com/"
+            "url": "https://nips.nostr.com/**"
           }
         ]
       }
@@ -28,14 +28,14 @@
       "value": "majesticons:open"
     },
     "customUiCmds": [
-			{
+      {
         "main": "/index-nip.js",
         "dist": "dist",
         "devMain": "http://localhost:5173",
         "name": "Nostr Open Specific NIP",
         "cmds": []
       }
-		],
+    ],
     "headlessCmds": [
       {
         "name": "Nostr Open NIP Repository (github.com)",
@@ -56,11 +56,12 @@
     "build:nip": "vite build"
   },
   "dependencies": {
+    "@iconify/react": "^5.2.0",
     "@kksh/api": "0.1.5",
     "@kksh/react": "0.1.1",
     "@radix-ui/react-icons": "^1.3.0",
-    "preact": "^10.19.6",
-    "i18next": "^23.15.1"
+    "i18next": "^23.15.1",
+    "preact": "^10.19.6"
   },
   "devDependencies": {
     "@types/bun": "latest",
