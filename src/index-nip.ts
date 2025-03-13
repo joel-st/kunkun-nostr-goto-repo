@@ -18,6 +18,7 @@ interface Nip {
   urlGithub: string;
   urlNostrCom: string;
   content: string;
+  kinds: number[];
 }
 
 class NostrOpenSpecificNip extends TemplateUiCommand {
@@ -25,6 +26,7 @@ class NostrOpenSpecificNip extends TemplateUiCommand {
   private preferences: string = "";
   private loading: boolean = false;
   private searchQuery: string = "";
+  private filteredNips: Nip[] = [];
 
   async load() {
     this.loading = true;
@@ -32,6 +34,7 @@ class NostrOpenSpecificNip extends TemplateUiCommand {
     try {
       // Fetch NIPs
       this.nips = await this.fetchNostrNips();
+      this.filteredNips = this.nips;
     } catch (error) {
       console.error('Failed to load NIPs:', error);
     } finally {
@@ -54,6 +57,27 @@ class NostrOpenSpecificNip extends TemplateUiCommand {
     } catch (error) {
       console.error('Failed to load preferences:', error);
     }
+  }
+
+  sortNips(nips: Nip[]): Nip[] {
+    return nips.sort((a, b) => {
+      const aIsNumeric = /^\d+$/.test(a.nip.replace(/^0+/, '')); // Remove leading zeros for numeric comparison
+      const bIsNumeric = /^\d+$/.test(b.nip.replace(/^0+/, ''));
+      
+      // If both are numeric, sort by number
+      if (aIsNumeric && bIsNumeric) {
+        return parseInt(a.nip) - parseInt(b.nip);
+      }
+      
+      // If only a is numeric, a comes first
+      if (aIsNumeric) return -1;
+      
+      // If only b is numeric, b comes first
+      if (bIsNumeric) return 1;
+      
+      // If both are non-numeric, sort alphabetically
+      return a.nip.localeCompare(b.nip);
+    });
   }
 
   // Function to fetch NIPs from GitHub
@@ -100,29 +124,105 @@ class NostrOpenSpecificNip extends TemplateUiCommand {
           rawTitle: title, // Store raw title without formatting
           urlGithub: urlGithub,
           urlNostrCom: urlNostrCom,
-          content: `NIP-${formattedNipId}: ${title}`
+          content: `NIP-${formattedNipId}: ${title}`,
+          kinds: [] // Initialize with empty array, will be populated later
+        });
+      }
+      
+      // Parse the Event Kinds table
+      // This table is located after the "## Event Kinds" heading
+      const eventKindsSection = content.match(/## Event Kinds\s+([\s\S]+?)(?=##|$)/);
+      if (eventKindsSection && eventKindsSection[1]) {        
+        // split table by rows first, then columns for better parsing
+        const tableRows: Array<[number[], string, string[]]> = [];
+        const tableContent = eventKindsSection[1].trim();
+        const tableLines = tableContent.split('\n').filter(line => line.trim() !== '');
+        
+        // Skip the header and separator rows
+        for (let i = 2; i < tableLines.length; i++) {
+          const row = tableLines[i];
+          const cells = row.split('|').map(cell => cell.trim()).filter(cell => cell !== '');
+          
+          if (cells.length >= 3) {
+            const kindCell = cells[0];
+            const descriptionCell = cells[1];
+            
+            // Parse the kind value - handle both single numbers and ranges
+            let kinds: number[] = [];
+            
+            // Match single numbers: `123`
+            const singleMatch = kindCell.match(/`(\d+)`/g);
+            if (singleMatch) {
+              singleMatch.forEach(match => {
+                const num = parseInt(match.replace(/`/g, ''));
+                if (!isNaN(num)) {
+                  kinds.push(num);
+                }
+              });
+            }
+            
+            // Match ranges: `10`-`20`
+            const rangeMatch = kindCell.match(/`(\d+)`\s*-\s*`(\d+)`/);
+            if (rangeMatch && rangeMatch[1] && rangeMatch[2]) {
+              const start = parseInt(rangeMatch[1]);
+              const end = parseInt(rangeMatch[2]);
+              
+              if (!isNaN(start) && !isNaN(end)) {
+                for (let j = start; j <= end; j++) {
+                  kinds.push(j);
+                }
+              }
+            }
+
+            let nipCell = cells[2];
+
+            // parse the nipCell
+            let extractedNips: string[] = [];
+            
+            // Pattern 1: [number|alphanumeric](number|alphanumeric.md) - e.g. "[01](01.md)"
+            const pattern1 = /\[([0-9A-Za-z]+)\]\([0-9A-Za-z]+\.md\)/g;
+            let match1;
+            while ((match1 = pattern1.exec(nipCell)) !== null) {
+              extractedNips.push(match1[1]);
+            }
+            
+            // Pattern 2: number|alphanumeric (deprecated) - e.g. "01 (deprecated)"
+            const pattern2 = /([0-9A-Za-z]+)\s+\(deprecated\)/g;
+            let match2;
+            while ((match2 = pattern2.exec(nipCell)) !== null) {
+              extractedNips.push(match2[1]);
+            }
+            
+            // Pattern 3: [number|alphanumeric](number|alphanumeric.md), [number|alphanumeric](number|alphanumeric.md), ...
+            // This is already handled by pattern1, as it will match each occurrence in a comma-separated list
+            
+            if (kinds.length > 0 && extractedNips.length > 0) {
+              tableRows.push([kinds, descriptionCell, extractedNips]);
+            }
+          }
+        }
+        
+        // Process the parsed rows
+        tableRows.forEach(row => {
+          const kinds = row[0];
+          const extractedNips = row[2]; // Get the extractedNips array from the row
+          
+          // Use the extracted NIPs directly instead of parsing again
+          extractedNips.forEach(nipId => {
+            // Find the corresponding NIP in our array
+            const nip = nips.find(n => n.nip === nipId || (nipId.startsWith('0') && n.nip === nipId.replace(/^0+/, '')));
+            if (nip) {
+              // Add these kinds to the NIP
+              nip.kinds = [...nip.kinds, ...kinds];
+              // Remove duplicates
+              nip.kinds = [...new Set(nip.kinds)];
+            }
+          });
         });
       }
       
       // Sort NIPs: numeric ones first (sorted by number), then alphanumeric (sorted alphabetically)
-      return nips.sort((a, b) => {
-        const aIsNumeric = /^\d+$/.test(a.nip.replace(/^0+/, '')); // Remove leading zeros for numeric comparison
-        const bIsNumeric = /^\d+$/.test(b.nip.replace(/^0+/, ''));
-        
-        // If both are numeric, sort by number
-        if (aIsNumeric && bIsNumeric) {
-          return parseInt(a.nip) - parseInt(b.nip);
-        }
-        
-        // If only a is numeric, a comes first
-        if (aIsNumeric) return -1;
-        
-        // If only b is numeric, b comes first
-        if (bIsNumeric) return 1;
-        
-        // If both are non-numeric, sort alphabetically
-        return a.nip.localeCompare(b.nip);
-      });
+      return this.sortNips(nips);
     } catch (error) {
       console.error('Error fetching NIPs:', error);
       return [];
@@ -130,23 +230,38 @@ class NostrOpenSpecificNip extends TemplateUiCommand {
   }
 
   // Filter NIPs based on search query
-  getFilteredNips(): Nip[] {
+  async setFilteredNips(): Promise<void> {
+
     if (!this.searchQuery) {
-      return this.nips;
+      this.filteredNips = this.nips
     }
     
     const query = this.searchQuery.toLowerCase();
-    return this.nips.filter(nip => 
-      nip.rawTitle.toLowerCase().includes(query) || 
-      nip.nip.toLowerCase().includes(query) ||
-      nip.content.toLowerCase().includes(query)
-    );
+    
+    // Check if the query contains a kind search pattern (e.g., k1, k10002)
+    const kindMatch = query.match(/k(\d+)/);
+    
+    let filteredNips = this.nips.filter(nip => {
+      // If there's a kind match, check if this NIP includes that kind
+      if (kindMatch && nip.kinds.includes(parseInt(kindMatch[1]))) {
+          console.log('kindMatch', kindMatch, nip);
+      }
+      
+      // Always perform text search regardless of kind match
+      return nip.rawTitle.toLowerCase().includes(query) || 
+        nip.nip.toLowerCase().includes(query) ||
+        nip.content.toLowerCase().includes(query) ||
+        (kindMatch && nip.kinds.includes(parseInt(kindMatch[1])));
+    });
+
+    this.filteredNips = this.sortNips(filteredNips);
+    this.updateUI();
   }
 
   // Handle search input change
   async onSearchTermChange(query: string): Promise<void> {
     this.searchQuery = query;
-    this.updateUI();
+    await this.setFilteredNips();
   }
 
   // Create action panel for the footer
@@ -179,40 +294,15 @@ class NostrOpenSpecificNip extends TemplateUiCommand {
 
 
   async updateUI() {
-    console.log('updateUI', this.preferences);
     return ui
       .setSearchBarPlaceholder("Number, Title, k[X], t[X]…")
       .then(() => {
-        const filteredNips = this.getFilteredNips();
-
-        if (this.loading) {
-          return ui.render(new List.List({
-            sections: [
-              new List.Section({
-                title: "Loading...",
-                items: []
-              })
-            ]
-          }));
-        }
-
-        if (filteredNips.length === 0) {
-          return ui.render(new List.List({
-            sections: [
-              new List.Section({
-                title: "No NIPs found",
-                items: []
-              })
-            ]
-          }));
-        }
-
         return ui.render(
           new List.List({
             sections: [
               new List.Section({
                 title: "Nostr Implementation Possibilities",
-                items: filteredNips.map(
+                items: this.filteredNips.map(
                   (nip) =>
                     new List.Item({
                       title: `NIP-${nip.nip}: ${nip.title}`,
