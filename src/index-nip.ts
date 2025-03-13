@@ -66,33 +66,63 @@ class NostrOpenSpecificNip extends TemplateUiCommand {
       // Decode content from base64
       const content = atob(fileData.content);
       
-      // Regular expression to match NIP entries in the list
-      // Format is like: - [NIP-01: Basic protocol flow description](01.md)
-      const nipRegex = /\- \[NIP-(\d+)\: (.*?)\]\((\d+\.md)\)/g;
+      // Updated regex to match both numeric and alphanumeric NIP identifiers
+      // Format can be like: 
+      // - [NIP-01: Basic protocol flow description](01.md)
+      // - [NIP-7D: Threads](7D.md)
+      const nipRegex = /\- \[NIP-([0-9A-Za-z]+)\: (.*?)\]\(([0-9A-Za-z]+\.md)\)/g;
       
       const nips: Nip[] = [];
       let match;
       
       // Find all matches in the content
       while ((match = nipRegex.exec(content)) !== null) {
-        const nipNumber = match[1].padStart(2, '0'); // Pad to ensure consistent format like "01"
-        const nipNumberNoPad = parseInt(nipNumber); // remove leading zeros
+        const nipId = match[1]; // This can be numeric or alphanumeric
         const title = match[2];
         const filename = match[3];
         
+        // Generate URLs based on NIP identifier
+        const urlGithub = `https://github.com/nostr-protocol/nips/blob/master/${filename}`;
+        
+        // For nostr.com URL, only use numeric format for numeric NIPs
+        // For alphanumeric NIPs, we'll still use the same format but be aware it might not work properly
+        const isNumeric = /^\d+$/.test(nipId);
+        const nipNumberNoPad = isNumeric ? parseInt(nipId) : nipId;
+        const urlNostrCom = `https://nips.nostr.com/${nipNumberNoPad}`;
+        
+        // Format the NIP identifier consistently for display
+        // For numeric NIPs, pad with leading zero if needed
+        const formattedNipId = isNumeric ? nipId.padStart(2, '0') : nipId;
+        
         nips.push({
-          nip: nipNumber,
+          nip: formattedNipId,
           title: title,
           rawTitle: title, // Store raw title without formatting
-          urlGithub: `https://github.com/nostr-protocol/nips/blob/master/${filename}`,
-          urlNostrCom: `https://nips.nostr.com/${nipNumberNoPad}`,
-          // We include content for filtering
-          content: `NIP-${nipNumber}: ${title}` 
+          urlGithub: urlGithub,
+          urlNostrCom: urlNostrCom,
+          content: `NIP-${formattedNipId}: ${title}`
         });
       }
       
-      // Sort NIPs by number
-      return nips.sort((a, b) => parseInt(a.nip) - parseInt(b.nip));
+      // Sort NIPs: numeric ones first (sorted by number), then alphanumeric (sorted alphabetically)
+      return nips.sort((a, b) => {
+        const aIsNumeric = /^\d+$/.test(a.nip.replace(/^0+/, '')); // Remove leading zeros for numeric comparison
+        const bIsNumeric = /^\d+$/.test(b.nip.replace(/^0+/, ''));
+        
+        // If both are numeric, sort by number
+        if (aIsNumeric && bIsNumeric) {
+          return parseInt(a.nip) - parseInt(b.nip);
+        }
+        
+        // If only a is numeric, a comes first
+        if (aIsNumeric) return -1;
+        
+        // If only b is numeric, b comes first
+        if (bIsNumeric) return 1;
+        
+        // If both are non-numeric, sort alphabetically
+        return a.nip.localeCompare(b.nip);
+      });
     } catch (error) {
       console.error('Error fetching NIPs:', error);
       return [];
@@ -108,7 +138,7 @@ class NostrOpenSpecificNip extends TemplateUiCommand {
     const query = this.searchQuery.toLowerCase();
     return this.nips.filter(nip => 
       nip.rawTitle.toLowerCase().includes(query) || 
-      nip.nip.includes(query) ||
+      nip.nip.toLowerCase().includes(query) ||
       nip.content.toLowerCase().includes(query)
     );
   }
@@ -151,7 +181,7 @@ class NostrOpenSpecificNip extends TemplateUiCommand {
   async updateUI() {
     console.log('updateUI', this.preferences);
     return ui
-      .setSearchBarPlaceholder("Search NIPs by number or title… or k[X] 🥳")
+      .setSearchBarPlaceholder("Number, Title, k[X], t[X]…")
       .then(() => {
         const filteredNips = this.getFilteredNips();
 
