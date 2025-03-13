@@ -6,11 +6,12 @@ import { $ } from "bun"
 // Define an empty array to store entrypoints
 const entrypoints: string[] = [];
 
-
+// Handle headless entrypoints
 if (Bun.argv.includes("--headless")) {
 	entrypoints.push("./src/index-github.ts", "./src/index-nostrcom.ts")
 } 
 
+// This is for backwards compatibility
 if (Bun.argv.includes("--template")) {
 	entrypoints.push("./src/index-nip.ts")
 }
@@ -35,6 +36,9 @@ await build()
 if (Bun.argv.includes("dev")) {
 	console.log(`Watching ${srcDir} for changes...`)
 	watch(srcDir, { recursive: true }, async (event, filename) => {
-		await build()
+		// Only rebuild if it's not the JSX file (handled by Vite)
+		if (filename && !filename.toString().includes('index-nip.jsx')) {
+			await build()
+		}
 	})
 }

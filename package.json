@@ -39,18 +39,23 @@
         "cmds": []
       }
     ],
-    "templateUiCmds": [
+    "customUiCmds": [
       {
-        "name": "Nostr Open Specific NIP",
         "main": "dist/index-nip.js",
+        "dist": "dist",
+        "devMain": "http://localhost:5173",
+        "name": "Nostr Open Specific NIP",
         "cmds": []
       }
     ]
   },
   "scripts": {
-    "dev:template": "bun build.ts dev --template",
+    "dev": "concurrently \"bun build.ts dev --headless\" \"vite\"",
     "dev:headless": "bun build.ts dev --headless",
-    "build": "bun build.ts"
+    "dev:ui": "vite",
+    "build": "bun build.ts --headless && vite build",
+    "build:headless": "bun build.ts --headless",
+    "build:ui": "vite build"
   },
   "dependencies": {
     "@iconify/react": "^5.2.0",
@@ -61,10 +66,11 @@
     "preact": "^10.19.6"
   },
   "devDependencies": {
-    "@types/bun": "latest",
     "@preact/preset-vite": "^2.8.1",
+    "@types/bun": "latest",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.19",
+    "concurrently": "^9.1.2",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.7",
