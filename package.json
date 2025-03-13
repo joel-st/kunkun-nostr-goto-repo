@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.kunkun.sh",
-  "name": "nostr-goto-repo",
+  "name": "kunkun-ext-nostr-goto-repo",
   "version": "0.0.10",
   "license": "CC0-1.0",
   "type": "module",
@@ -47,7 +47,18 @@
     "typescript": "^5.0.0"
   },
   "files": [
-    "./dist",
+    "dist",
+    "src",
+    "package.json",
+    "readme.md",
     ".gitignore"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joel-st/kunkun-nostr-goto-repo"
+  },
+  "keywords": [
+    "nostr",
+    "NIP"
   ]
 }
