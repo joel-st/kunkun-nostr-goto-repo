@@ -120,7 +120,7 @@ class NostrOpenSpecificNip extends TemplateUiCommand {
   }
 
   // Create action panel for the footer
-  getFooterActions(): Action[] {
+  getFooterActions(): Action.Action[] {
     let actions = [
       new Action.Action({
         title: "Always open on nips.nostr.com",
