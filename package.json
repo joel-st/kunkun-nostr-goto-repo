@@ -27,15 +27,6 @@
       "type": "iconify",
       "value": "majesticons:open"
     },
-    "customUiCmds": [
-      {
-        "main": "/index-nip.js",
-        "dist": "dist",
-        "devMain": "http://localhost:5173",
-        "name": "Nostr Open Specific NIP",
-        "cmds": []
-      }
-    ],
     "headlessCmds": [
       {
         "name": "Nostr Open NIP Repository (github.com)",
@@ -47,13 +38,19 @@
         "main": "dist/index-nostrcom.js",
         "cmds": []
       }
+    ],
+    "templateUiCmds": [
+      {
+        "name": "Nostr Open Specific NIP",
+        "main": "dist/index-nip.js",
+        "cmds": []
+      }
     ]
   },
   "scripts": {
+    "dev:template": "bun build.ts dev --template",
     "dev:headless": "bun build.ts dev --headless",
-    "build:headless": "bun build.ts",
-    "dev:nip": "vite",
-    "build:nip": "vite build"
+    "build": "bun build.ts"
   },
   "dependencies": {
     "@iconify/react": "^5.2.0",

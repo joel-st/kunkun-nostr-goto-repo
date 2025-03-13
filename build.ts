@@ -3,7 +3,17 @@ import { join } from "path"
 import { refreshTemplateWorkerCommand } from "@kksh/api/dev"
 import { $ } from "bun"
 
-const entrypoints = ["./src/index-github.ts", "./src/index-nostrcom.ts"]
+// Define an empty array to store entrypoints
+const entrypoints: string[] = [];
+
+
+if (Bun.argv.includes("--headless")) {
+	entrypoints.push("./src/index-github.ts", "./src/index-nostrcom.ts")
+} 
+
+if (Bun.argv.includes("--template")) {
+	entrypoints.push("./src/index-nip.ts")
+}
 
 async function build() {
 	try {
