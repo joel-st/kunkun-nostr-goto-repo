@@ -41,7 +41,7 @@
     ],
     "customUiCmds": [
       {
-        "main": "dist/index-nip.js",
+        "main": "/",
         "dist": "dist",
         "devMain": "http://localhost:5173",
         "name": "Nostr Open Specific NIP",
